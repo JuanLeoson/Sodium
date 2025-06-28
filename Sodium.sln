@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36119.2 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sodium", "Sodium\Sodium.csproj", "{FD39D68F-F722-42D5-9A84-599A0B77FDBE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FD39D68F-F722-42D5-9A84-599A0B77FDBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD39D68F-F722-42D5-9A84-599A0B77FDBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD39D68F-F722-42D5-9A84-599A0B77FDBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD39D68F-F722-42D5-9A84-599A0B77FDBE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EA80A23E-91C5-4025-9834-F056D044BEA0}
+	EndGlobalSection
+EndGlobal
