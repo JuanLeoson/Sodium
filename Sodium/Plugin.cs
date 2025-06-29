@@ -39,6 +39,8 @@ namespace Sodium
             QualitySettings.lodBias = 0.0f;
             QualitySettings.pixelLightCount = 0;
             QualitySettings.realtimeReflectionProbes = false;
+            QualitySettings.enableLODCrossFade = false;
+            QualitySettings.maximumLODLevel = 0;
             foreach (Camera camera in Camera.allCameras)
             {
                 camera.allowMSAA = false;
@@ -46,12 +48,13 @@ namespace Sodium
                 camera.farClipPlane = 50.0f;
                 camera.focusDistance = 1f;
                 camera.allowHDR = false;
-                camera.nearClipPlane = 0.07f;
+                //camera.nearClipPlane = 0.07f; breaks mirror
             }
 
             #endregion
             #region Camera Shit
             Camera.main.farClipPlane = 50f;
+            Camera.main.anamorphism = 0.0f;
             #endregion
         }
     }

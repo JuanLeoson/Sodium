@@ -6,6 +6,6 @@ namespace Sodium.PluginData
 {
     internal class Internal_Plugin_Data
     {
-        public const string ThisVersion = "1.5.0";
+        public const string ThisVersion = "1.5.0"; //detect my changes git.
     }
 }
