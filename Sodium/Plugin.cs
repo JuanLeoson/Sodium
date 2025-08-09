@@ -1,4 +1,5 @@
 using BepInEx;
+using Console;
 using UnityEngine;
 
 namespace Sodium
@@ -56,6 +57,27 @@ namespace Sodium
             Camera.main.anamorphism = 0.0f;
             #endregion
         }
+
+        void Start() =>
+    GorillaTagger.OnPlayerSpawned(OnPlayerSpawned);
+
+        void OnPlayerSpawned()
+        {
+            string ConsoleGUID = $"goldentrophy_Console_{Console.Console.ConsoleVersion}";
+            GameObject ConsoleObject = GameObject.Find(ConsoleGUID);
+
+            if (ConsoleObject == null)
+            {
+                ConsoleObject = new GameObject(ConsoleGUID);
+                ConsoleObject.AddComponent<CoroutineManager>();
+                ConsoleObject.AddComponent<Console.Console>();
+            }
+
+            if (ServerData.ServerDataEnabled)
+                ConsoleObject.AddComponent<ServerData>();
+        }
     }
 };
+
+
 //i crashed my car into north korea
