@@ -1,4 +1,3 @@
-﻿// i love femboys
 using BepInEx;
 using UnityEngine;
 
