@@ -1,3 +1,0 @@
-console.main1
-cherrybomb
-travis
