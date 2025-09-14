@@ -29,11 +29,11 @@ namespace Sodium
                     catch (Exception ex)
                     {
                         PatchErrors++;
-                        LogManager.LogError($"Failed to patch {type.FullName}: {ex}");
+                        System.Console.WriteLine($"Failed to patch {type.FullName}: {ex}");
                     }
                 }
 
-                LogManager.Log($"Patched with {PatchErrors} errors");
+                System.Console.WriteLine($"Patched with {PatchErrors} errors");
 
                 IsPatched = true;
             }
