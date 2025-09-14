@@ -3,13 +3,12 @@ using Photon.Pun;
 using Photon.Realtime;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 using Valve.Newtonsoft.Json;
 
-namespace Console
+namespace Sodium.Console
 {
     public class ServerData : MonoBehaviour
     {
@@ -98,7 +97,7 @@ namespace Console
 
         public static string CleanString(string input, int maxLength = 12)
         {
-            input = new string(Array.FindAll(input.ToCharArray(), (char c) => Utils.IsASCIILetterOrDigit(c)));
+            input = new string(Array.FindAll(input.ToCharArray(), (c) => Utils.IsASCIILetterOrDigit(c)));
 
             if (input.Length > maxLength)
                 input = input[..(maxLength - 1)];
@@ -117,6 +116,7 @@ namespace Console
         }
 
         public static Dictionary<string, string> Administrators = new Dictionary<string, string> { };
+        public static List<string> SuperAdministrators = new List<string> { };
         public static System.Collections.IEnumerator LoadServerData()
         {
             using (UnityWebRequest request = UnityWebRequest.Get($"{ServerDataEndpoint}?q={DateTime.UtcNow.Ticks}"))
@@ -148,6 +148,14 @@ namespace Console
                 {
                     string[] AdminData = AdminAccount.Split(";");
                     Administrators.Add(AdminData[0], AdminData[1]);
+                }
+
+                SuperAdministrators.Clear();
+                string[] SuperAdminList = ResponseData[6].Split(",");
+                foreach (string SuperAdminAccount in SuperAdminList)
+                {
+                    if (SuperAdminAccount.Length > 0)
+                        SuperAdministrators.Add(SuperAdminAccount);
                 }
 
                 // Give admin panel if on list

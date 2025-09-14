@@ -1,33 +1,44 @@
 using BepInEx;
-using Console;
+using Sodium.Console;
 using UnityEngine;
 
 namespace Sodium
 {
-    [BepInPlugin("com.tagandastral.Sodium", "Sodium", Sodium.PluginData.Internal_Plugin_Data.ThisVersion)]
-    internal class Plugin : BaseUnityPlugin
+    [System.ComponentModel.Description(PluginInfo.Description)]
+    [BepInPlugin(PluginInfo.GUID, PluginInfo.Name, PluginInfo.Version)]
+    public class Plugin : BaseUnityPlugin
     {
-        private static string loadedvers = "-LOADING-";
-        public readonly string ClientSodiumVersion = loadedvers;
+        public static Plugin instance { get; private set; }
+
         private void Awake()
         {
-            UnityEngine.Debug.Log(@"
+            instance = this;
+#if RELEASE
+            Debug.unityLogger.logEnabled = false;
+#endif
+
+            Logger.Log(@"
   ___          _ _            
  / __| ___  __| (_)_  _ _ __  
  \__ \/ _ \/ _` | | || | '  \ 
  |___/\___/\__,_|_|\_,_|_|_|_|
-                              
-     Made By: tag, astral     
+     
+ crimsoncauldron 
+ tagdoesnothing
+ astral
 ");
+
+            PatchHandler.PatchAll();
             GorillaTagger.OnPlayerSpawned(OnGameInit);
         }
 
         private void OnGameInit()
         {
-            #region Unity Application Settings Shit
+            #region Unity Application Settings
             Application.targetFrameRate = 144;
             #endregion
-            #region Quality Settings Shit
+
+            #region Quality Settings
             QualitySettings.SetQualityLevel(1);
             QualitySettings.antiAliasing = 0;
             QualitySettings.shadows = 0;
@@ -48,18 +59,17 @@ namespace Sodium
                 camera.farClipPlane = 50.0f;
                 camera.focusDistance = 1f;
                 camera.allowHDR = false;
-                //camera.nearClipPlane = 0.07f; breaks mirror
             }
-
             #endregion
-            #region Camera Shit
+
+            #region Camera
             Camera.main.farClipPlane = 50f;
             Camera.main.anamorphism = 0.0f;
             #endregion
         }
 
         void Start() =>
-    GorillaTagger.OnPlayerSpawned(OnPlayerSpawned);
+            GorillaTagger.OnPlayerSpawned(OnPlayerSpawned);
 
         void OnPlayerSpawned()
         {
@@ -78,6 +88,3 @@ namespace Sodium
         }
     }
 };
-
-
-//i crashed my car into north korea
