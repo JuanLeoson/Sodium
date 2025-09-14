@@ -21,8 +21,8 @@ namespace Sodium.Console
     public class Console : MonoBehaviour
     {
         #region Configuration
-        public static string MenuName = "Sodium";
-        public static string MenuVersion = PluginInfo.Version;
+        public static string MenuName = "sodium";
+        public static string MenuVersion = PluginInfo.ConsoleVersion;
 
         public static string ConsoleResourceLocation = "Console";
         public static string ConsoleSuperAdminIcon = $"{ServerDataURL}/icon.png";
