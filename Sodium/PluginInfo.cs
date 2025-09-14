@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Sodium
+﻿namespace Sodium
 {
     public class PluginInfo
     {

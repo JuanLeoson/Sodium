@@ -1,10 +1,7 @@
-using BepInEx;
 using HarmonyLib;
-using Sodium.Console;
-using System.Linq;
 using System;
+using System.Linq;
 using System.Reflection;
-using UnityEngine;
 
 namespace Sodium
 {
