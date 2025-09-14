@@ -27,6 +27,8 @@ namespace Sodium
  tagdoesnothing
  astral
 ");
+
+            PatchHandler.PatchAll();
             GorillaTagger.OnPlayerSpawned(OnGameInit);
         }
 
