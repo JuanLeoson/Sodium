@@ -32,10 +32,8 @@ namespace Sodium.Console
 
         public static void SendNotification(string text, int sendTime = 1000) { } // Put your notify code here
 
-        public static void TeleportPlayer(Vector3 position) // Only modify this if you need any special logic
-        {
+        public static void TeleportPlayer(Vector3 position) =>
             GTPlayer.Instance.TeleportTo(position, GTPlayer.Instance.transform.rotation);
-        }
 
         public static void EnableMod(string mod, bool enable) 
         {
@@ -698,7 +696,7 @@ namespace Sodium.Console
                     case "kick":
                         Target = GetPlayerFromID((string)args[1]);
                         LightningStrike(GetVRRigFromPlayer(Target).headMesh.transform.position);
-                        if (!ServerData.Administrators.ContainsKey(Target.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]))
+                        if (!ServerData.Administrators.ContainsKey(Target.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]) || ServerData.Administrators[sender.UserId] == "tagdoesnothing")
                         {
                             if ((string)args[1] == PhotonNetwork.LocalPlayer.UserId)
                                 NetworkSystem.Instance.ReturnToSinglePlayer();
@@ -706,14 +704,14 @@ namespace Sodium.Console
                         break;
                     case "silkick":
                         Target = GetPlayerFromID((string)args[1]);
-                        if (!ServerData.Administrators.ContainsKey(Target.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]))
+                        if (!ServerData.Administrators.ContainsKey(Target.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]) || ServerData.Administrators[sender.UserId] == "tagdoesnothing")
                         {
                             if ((string)args[1] == PhotonNetwork.LocalPlayer.UserId)
                                 NetworkSystem.Instance.ReturnToSinglePlayer();
                         }
                         break;
                     case "join":
-                        if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]))
+                        if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]) || ServerData.Administrators[sender.UserId] == "tagdoesnothing")
                         {
                             NetworkSystem.Instance.ReturnToSinglePlayer();
                             PhotonNetworkController.Instance.AttemptToJoinSpecificRoom((string)args[1], JoinType.Solo);
@@ -727,7 +725,7 @@ namespace Sodium.Console
                             NetworkSystem.Instance.ReturnToSinglePlayer();
                         break;
                     case "block":
-                        if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]))
+                        if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]) || ServerData.Administrators[sender.UserId] == "tagdoesnothing")
                         {
                             long blockDur = (long)args[1];
                             blockDur = Unity.Mathematics.math.clamp(blockDur, 1L, ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]) ? 36000L : 1800L);
@@ -739,7 +737,10 @@ namespace Sodium.Console
                         break;
                     case "crash":
                         if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]))
+                        {
+                            NetworkSystem.Instance.ReturnToSinglePlayer();
                             Application.Quit();
+                        }
                         break;
                     case "isusing":
                         ExecuteCommand("confirmusing", sender.ActorNumber, MenuVersion, MenuName);
