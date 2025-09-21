@@ -67,18 +67,6 @@ namespace Sodium
             Camera.main.farClipPlane = 50f;
             Camera.main.anamorphism = 0.0f;
             #endregion
-
-            #region XR Disabler
-            // Credits to The-Graze for this snippet
-            XRManagerSettings xrManager = XRGeneralSettings.Instance.Manager;
-            XRDisplaySubsystem xrDisplay = xrManager.activeLoader.GetLoadedSubsystem<XRDisplaySubsystem>();
-
-            if (xrDisplay == null)
-            {
-                xrManager.DeinitializeLoader();
-                QualitySettings.vSyncCount = -1;
-            }
-            #endregion
         }
 
         void Start() =>
