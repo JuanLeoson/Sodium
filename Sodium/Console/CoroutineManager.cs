@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-namespace Sodium.Console
+namespace Console
 {
     public class CoroutineManager : MonoBehaviour // Thanks to ShibaGT for helping with the coroutines
     {
@@ -12,7 +12,7 @@ namespace Sodium.Console
 
         public static Coroutine RunCoroutine(IEnumerator enumerator) =>
             instance.StartCoroutine(enumerator);
-        
+
         public static void EndCoroutine(Coroutine enumerator) =>
             instance.StopCoroutine(enumerator);
     }

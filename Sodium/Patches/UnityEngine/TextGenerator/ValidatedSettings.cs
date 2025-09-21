@@ -21,7 +21,7 @@ namespace Sodium.Patches.UnityEngine.TextGenerator
 
                 if (settings.resizeTextForBestFit)
                     settings.resizeTextForBestFit = settings.font != null;
-                
+
                 textGenerationSettings = settings;
             }
             __result = textGenerationSettings;

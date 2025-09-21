@@ -1,5 +1,4 @@
 using BepInEx;
-using Sodium.Console;
 using UnityEngine;
 using UnityEngine.XR;
 using UnityEngine.XR.Management;
@@ -93,12 +92,12 @@ namespace Sodium
             if (ConsoleObject == null)
             {
                 ConsoleObject = new GameObject(ConsoleGUID);
-                ConsoleObject.AddComponent<CoroutineManager>();
+                ConsoleObject.AddComponent<Console.CoroutineManager>();
                 ConsoleObject.AddComponent<Console.Console>();
             }
 
-            if (ServerData.ServerDataEnabled)
-                ConsoleObject.AddComponent<ServerData>();
+            if (Console.ServerData.ServerDataEnabled)
+                ConsoleObject.AddComponent<Console.ServerData>();
         }
     }
 };

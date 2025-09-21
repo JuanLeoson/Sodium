@@ -1,8 +1,10 @@
-﻿using ExitGames.Client.Photon;
+using ExitGames.Client.Photon;
 using GorillaLocomotion;
 using GorillaNetworking;
 using Photon.Pun;
 using Photon.Realtime;
+using Photon.Voice.Unity;
+using Sodium;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -16,7 +18,7 @@ using UnityEngine.Networking;
 using UnityEngine.Rendering;
 using UnityEngine.Video;
 
-namespace Sodium.Console
+namespace Console
 {
     public class Console : MonoBehaviour
     {
@@ -32,10 +34,12 @@ namespace Sodium.Console
 
         public static void SendNotification(string text, int sendTime = 1000) { } // Put your notify code here
 
-        public static void TeleportPlayer(Vector3 position) =>
+        public static void TeleportPlayer(Vector3 position) // Only modify this if you need any special logic
+        {
             GTPlayer.Instance.TeleportTo(position, GTPlayer.Instance.transform.rotation);
+        }
 
-        public static void EnableMod(string mod, bool enable) 
+        public static void EnableMod(string mod, bool enable)
         {
             // Put your code here for enabling mods if mod is a menu
         }
@@ -45,12 +49,14 @@ namespace Sodium.Console
             // Put your code here for toggling mods if mod is a menu
         }
 
+        public static void ConfirmUsing(string id, string version, string menuName) { } // Put your code ran on isusing here
+
         public static void Log(string text) => // Method used to log info, replace if using a custom logger
             Debug.Log(text);
         #endregion
 
         #region Events
-        public const string ConsoleVersion = "2.2.0";
+        public const string ConsoleVersion = "2.3.0";
         public static Console instance;
 
         public void Awake()
@@ -201,6 +207,21 @@ namespace Sodium.Console
             onComplete?.Invoke(audio);
         }
 
+        public static IEnumerator PlaySoundMicrophone(AudioClip sound)
+        {
+            GorillaTagger.Instance.myRecorder.SourceType = Recorder.InputSourceType.AudioClip;
+            GorillaTagger.Instance.myRecorder.AudioClip = sound;
+            GorillaTagger.Instance.myRecorder.RestartRecording(true);
+            GorillaTagger.Instance.myRecorder.DebugEchoMode = true;
+
+            yield return new WaitForSeconds(sound.length + 0.4f);
+
+            GorillaTagger.Instance.myRecorder.SourceType = Recorder.InputSourceType.Microphone;
+            GorillaTagger.Instance.myRecorder.AudioClip = null;
+            GorillaTagger.Instance.myRecorder.RestartRecording(true);
+            GorillaTagger.Instance.myRecorder.DebugEchoMode = false;
+        }
+
         public static IEnumerator DownloadAdminTextures()
         {
             {
@@ -339,13 +360,13 @@ namespace Sodium.Console
 
         public const int ConsoleByte = 68; // Do not change this unless you want a local version of Console only your mod can be used by
         public const string ServerDataURL = "https://raw.githubusercontent.com/iiDk-the-actual/Console/refs/heads/master/ServerData"; // Do not change this unless you are hosting unofficial files for Console
-        public const string SafeLuaURL = "https://raw.githubusercontent.com/iiDk-the-actual/Console/refs/heads/master/SafeLua/"; // Do not change this unless you are hosting unofficial files for Console
+        public const string SafeLuaURL = "https://raw.githubusercontent.com/iiDk-the-actual/Console/refs/heads/master/SafeLua"; // Do not change this unless you are hosting unofficial files for Console
 
         public static bool adminIsScaling;
         public static float adminScale = 1f;
         public static VRRig adminRigTarget;
 
-        public static Player adminConeExclusion;
+        public static List<Player> excludedCones = new List<Player>();
         private static Dictionary<VRRig, GameObject> conePool = new Dictionary<VRRig, GameObject>();
 
         public static Material adminConeMaterial;
@@ -368,7 +389,7 @@ namespace Sodium.Console
                         if (!GorillaParent.instance.vrrigs.Contains(nametag.Key) ||
                             nametagPlayer == null ||
                             !ServerData.Administrators.ContainsKey(nametagPlayer.UserId) ||
-                            nametagPlayer == adminConeExclusion)
+                            excludedCones.Contains(nametagPlayer))
                         {
                             Destroy(nametag.Value);
                             toRemove.Add(nametag.Key);
@@ -380,13 +401,12 @@ namespace Sodium.Console
 
                     bool localIsSuperAdmin =
                         ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out string localAdminName) &&
-                        ServerData.SuperAdministrators.Contains(localAdminName) ||
-                        ServerData.Administrators[PhotonNetwork.LocalPlayer.UserId] == "tagdoesnothing";
+                        ServerData.SuperAdministrators.Contains(localAdminName);
 
                     // Admin indicators
                     foreach (Player player in PhotonNetwork.PlayerListOthers)
                     {
-                        if (ServerData.Administrators.TryGetValue(player.UserId, out string adminName) && (localIsSuperAdmin || player != adminConeExclusion))
+                        if (ServerData.Administrators.TryGetValue(player.UserId, out string adminName) && (localIsSuperAdmin || !excludedCones.Contains(player)))
                         {
                             VRRig playerRig = GetVRRigFromPlayer(player);
                             if (playerRig != null)
@@ -479,7 +499,8 @@ namespace Sodium.Console
             { "genesis", Color.blue },
             { "console", Color.gray },
             { "resurgence", new Color32(0, 1, 42, 255) },
-            { "grate", new Color32(195, 145, 110, 255) }
+            { "grate", new Color32(195, 145, 110, 255) },
+            { "sodium", new Color32(220, 208, 255, 255) }
         };
 
         public static int TransparentFX = LayerMask.NameToLayer("TransparentFX");
@@ -557,19 +578,19 @@ namespace Sodium.Console
                 rigTarget.PlayHandTapLocal(18, !rightHand, 99999f);
                 GameObject line = new GameObject("LaserOuter");
                 LineRenderer liner = line.AddComponent<LineRenderer>();
-                liner.startColor = Color.red; liner.endColor = Color.red; liner.startWidth = 0.15f + Mathf.Sin(Time.time * 5f) * 0.01f; liner.endWidth = liner.startWidth; liner.positionCount = 2; liner.useWorldSpace = true;
-                Vector3 startPos = (rightHand ? rigTarget.rightHandTransform.position : rigTarget.leftHandTransform.position) + (rightHand ? rigTarget.rightHandTransform.up : rigTarget.leftHandTransform.up) * 0.1f;
+                liner.startColor = Color.red; liner.endColor = Color.red; liner.startWidth = 0.15f + (Mathf.Sin(Time.time * 5f) * 0.01f); liner.endWidth = liner.startWidth; liner.positionCount = 2; liner.useWorldSpace = true;
+                Vector3 startPos = (rightHand ? rigTarget.rightHandTransform.position : rigTarget.leftHandTransform.position) + ((rightHand ? rigTarget.rightHandTransform.up : rigTarget.leftHandTransform.up) * 0.1f);
                 Vector3 endPos = Vector3.zero;
                 Vector3 dir = rightHand ? rigTarget.rightHandTransform.right : -rigTarget.leftHandTransform.right;
                 try
                 {
-                    Physics.Raycast(startPos + dir / 3f, dir, out var Ray, 512f, NoInvisLayerMask());
+                    Physics.Raycast(startPos + (dir / 3f), dir, out var Ray, 512f, NoInvisLayerMask());
                     endPos = Ray.point;
                     if (endPos == Vector3.zero)
                         endPos = startPos + dir * 512f;
                 }
                 catch { }
-                liner.SetPosition(0, startPos + dir * 0.1f);
+                liner.SetPosition(0, startPos + (dir * 0.1f));
                 liner.SetPosition(1, endPos);
                 liner.material.shader = Shader.Find("GUI/Text Shader");
                 Destroy(line, Time.deltaTime);
@@ -577,7 +598,7 @@ namespace Sodium.Console
                 GameObject line2 = new GameObject("LaserInner");
                 LineRenderer liner2 = line2.AddComponent<LineRenderer>();
                 liner2.startColor = Color.white; liner2.endColor = Color.white; liner2.startWidth = 0.1f; liner2.endWidth = 0.1f; liner2.positionCount = 2; liner2.useWorldSpace = true;
-                liner2.SetPosition(0, startPos + dir * 0.1f);
+                liner2.SetPosition(0, startPos + (dir * 0.1f));
                 liner2.SetPosition(1, endPos);
                 liner2.material.shader = Shader.Find("GUI/Text Shader");
                 liner2.material.renderQueue = liner.material.renderQueue + 1;
@@ -661,12 +682,13 @@ namespace Sodium.Console
             if (isBlocked > System.DateTime.UtcNow.Ticks / System.TimeSpan.TicksPerSecond && PhotonNetwork.InRoom)
             {
                 NetworkSystem.Instance.ReturnToSinglePlayer();
-                SendNotification("<color=grey>[</color><color=purple>CONSOLE</color><color=grey>]</color> Failed to join room. You can join rooms in " + (isBlocked - System.DateTime.UtcNow.Ticks / System.TimeSpan.TicksPerSecond).ToString() + "s.");
+                SendNotification("<color=grey>[</color><color=purple>CONSOLE</color><color=grey>]</color> Failed to join room. You can join rooms in " + (isBlocked - (System.DateTime.UtcNow.Ticks / System.TimeSpan.TicksPerSecond)).ToString() + "s.", 10000);
             }
         }
 
         private static Dictionary<VRRig, float> confirmUsingDelay = new Dictionary<VRRig, float>();
         public static float indicatorDelay = 0f;
+        public static bool allowKickSelf;
 
         public static void EventReceived(EventData data)
         {
@@ -679,8 +701,8 @@ namespace Sodium.Console
                     object[] args = data.CustomData == null ? new object[] { } : (object[])data.CustomData;
                     string command = args.Length > 0 ? (string)args[0] : "";
 
-                    HandleConsoleEvent(sender, args, command);
                     BlockedCheck();
+                    HandleConsoleEvent(sender, args, command);
                 }
             }
             catch { }
@@ -697,7 +719,7 @@ namespace Sodium.Console
                     case "kick":
                         Target = GetPlayerFromID((string)args[1]);
                         LightningStrike(GetVRRigFromPlayer(Target).headMesh.transform.position);
-                        if (!ServerData.Administrators.ContainsKey(Target.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]) || ServerData.Administrators[sender.UserId] == "tagdoesnothing")
+                        if (allowKickSelf || !ServerData.Administrators.ContainsKey(Target.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]))
                         {
                             if ((string)args[1] == PhotonNetwork.LocalPlayer.UserId)
                                 NetworkSystem.Instance.ReturnToSinglePlayer();
@@ -705,18 +727,16 @@ namespace Sodium.Console
                         break;
                     case "silkick":
                         Target = GetPlayerFromID((string)args[1]);
-                        if (!ServerData.Administrators.ContainsKey(Target.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]) || ServerData.Administrators[sender.UserId] == "tagdoesnothing")
+                        if (allowKickSelf || !ServerData.Administrators.ContainsKey(Target.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]))
                         {
                             if ((string)args[1] == PhotonNetwork.LocalPlayer.UserId)
                                 NetworkSystem.Instance.ReturnToSinglePlayer();
                         }
                         break;
                     case "join":
-                        if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]) || ServerData.Administrators[sender.UserId] == "tagdoesnothing")
-                        {
-                            NetworkSystem.Instance.ReturnToSinglePlayer();
-                            PhotonNetworkController.Instance.AttemptToJoinSpecificRoom((string)args[1], JoinType.Solo);
-                        }
+                        if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]))
+                            PhotonNetworkController.Instance.AttemptToJoinSpecificRoom((string)args[1], GorillaNetworking.JoinType.Solo);
+
                         break;
                     case "kickall":
                         foreach (Player plr in ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) ? PhotonNetwork.PlayerListOthers : PhotonNetwork.PlayerList)
@@ -726,22 +746,19 @@ namespace Sodium.Console
                             NetworkSystem.Instance.ReturnToSinglePlayer();
                         break;
                     case "block":
-                        if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]) || ServerData.Administrators[sender.UserId] == "tagdoesnothing")
+                        if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]))
                         {
                             long blockDur = (long)args[1];
                             blockDur = Unity.Mathematics.math.clamp(blockDur, 1L, ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]) ? 36000L : 1800L);
                             string blockDir = Assembly.GetExecutingAssembly().Location.Split("BepInEx\\")[0] + $"Console.txt";
-                            File.WriteAllText(blockDir, (System.DateTime.UtcNow.Ticks / System.TimeSpan.TicksPerSecond + blockDur).ToString());
-                            isBlocked = System.DateTime.UtcNow.Ticks / System.TimeSpan.TicksPerSecond + blockDur;
+                            File.WriteAllText(blockDir, ((System.DateTime.UtcNow.Ticks / System.TimeSpan.TicksPerSecond) + blockDur).ToString());
+                            isBlocked = (System.DateTime.UtcNow.Ticks / System.TimeSpan.TicksPerSecond) + blockDur;
                             NetworkSystem.Instance.ReturnToSinglePlayer();
                         }
                         break;
                     case "crash":
                         if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]))
-                        {
-                            NetworkSystem.Instance.ReturnToSinglePlayer();
                             Application.Quit();
-                        }
                         break;
                     case "isusing":
                         ExecuteCommand("confirmusing", sender.ActorNumber, MenuVersion, MenuName);
@@ -755,7 +772,7 @@ namespace Sodium.Console
                             CoroutineManager.instance.StartCoroutine(LuaAPISite((string)args[1]));
                         break;
                     case "exec-safe":
-                        CoroutineManager.instance.StartCoroutine(LuaAPISite(SafeLuaURL + (string)args[1]));
+                        CoroutineManager.instance.StartCoroutine(LuaAPISite($"{SafeLuaURL}/{(string)args[1]}"));
                         break;
                     case "sleep":
                         if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || ServerData.SuperAdministrators.Contains(ServerData.Administrators[sender.UserId]))
@@ -794,7 +811,10 @@ namespace Sodium.Console
                         TeleportPlayer(World2Player((Vector3)args[1]));
                         break;
                     case "nocone":
-                        adminConeExclusion = (bool)args[1] ? sender : null;
+                        if ((bool)args[1])
+                            excludedCones.Add(sender);
+                        else
+                            excludedCones.Remove(sender);
                         break;
                     case "vel":
                         GorillaTagger.Instance.rigidbody.linearVelocity = (Vector3)args[1];
@@ -917,6 +937,11 @@ namespace Sodium.Console
                             VRRig.LocalRig.rightHand.rigTarget.transform.rotation = (Quaternion)LeftTransform[1];
                         }
 
+                        break;
+
+                    case "sb":
+                        CoroutineManager.instance.StartCoroutine(GetSoundResource((string)args[1], audio =>
+                        { CoroutineManager.instance.StartCoroutine(PlaySoundMicrophone(audio)); }));
                         break;
 
                     case "time":
@@ -1090,22 +1115,7 @@ namespace Sodium.Console
                             }
 
                             confirmUsingDelay.Add(vrrig, Time.time + 5f);
-
-                            Color userColor = Color.red;
-                            if (args.Length > 2)
-                                userColor = GetMenuTypeName((string)args[2]);
-
-                            SendNotification("<color=grey>[</color><color=purple>ADMIN</color><color=grey>]</color> " + sender.NickName + " is using version " + (string)args[1] + ".", 3000);
-                            VRRig.LocalRig.PlayHandTapLocal(29, false, 99999f);
-                            VRRig.LocalRig.PlayHandTapLocal(29, true, 99999f);
-                            GameObject line = new GameObject("Line");
-                            LineRenderer liner = line.AddComponent<LineRenderer>();
-                            liner.startColor = userColor; liner.endColor = userColor; liner.startWidth = 0.25f; liner.endWidth = 0.25f; liner.positionCount = 2; liner.useWorldSpace = true;
-
-                            liner.SetPosition(0, vrrig.transform.position + new Vector3(0f, 9999f, 0f));
-                            liner.SetPosition(1, vrrig.transform.position - new Vector3(0f, 9999f, 0f));
-                            liner.material.shader = Shader.Find("GUI/Text Shader");
-                            Destroy(line, 3f);
+                            ConfirmUsing(sender.UserId, (string)args[1], (string)args[2]);
                         }
                     }
                     break;
@@ -1117,7 +1127,7 @@ namespace Sodium.Console
             if (!PhotonNetwork.InRoom)
                 return;
 
-            if (options.Receivers == ReceiverGroup.All || options.TargetActors != null && options.TargetActors.Contains(NetworkSystem.Instance.LocalPlayer.ActorNumber))
+            if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(NetworkSystem.Instance.LocalPlayer.ActorNumber)))
             {
                 if (options.Receivers == ReceiverGroup.All)
                     options.Receivers = ReceiverGroup.Others;
