@@ -1,0 +1,3 @@
+261.43.132.91 {Pontiac, MI}
+Device issue:
+{Too much memory used: 14.3GB}
